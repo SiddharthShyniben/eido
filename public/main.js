@@ -3,7 +3,7 @@ const $$ = (...args) => document.querySelectorAll(...args);
 const sleep = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms));
 
 const code = $('.code-container');
-let lines = [...$$('body > code > .line')];
+let lines = [...$$(':not(data-lsp) > code > .line')];
 console.log(lines);
 const docs = $("#docs");
 const docEntries = $$("#docs p");
@@ -171,7 +171,7 @@ function removeLine(...lineNrs) {
 						sleep(500).then(() => {
 							line.classList.remove('remove');
 							line.remove();
-							lines = [...$$('body > code > .line')];
+							lines = [...$$(':not(data-lsp) > code > .line')];
 							resolve();
 						});
 					});
@@ -186,7 +186,7 @@ function removeLine(...lineNrs) {
 function saveLine(l) {
 	const line = lines[l - 1];
 	line.remove();
-	lines = [...$$('body > code > .line')];
+	lines = [...$$(':not(data-lsp) > code > .line')];
 	return line;
 }
 
@@ -195,7 +195,7 @@ async function pushLine(after, line) {
 	line.classList.add('insert');
 	l.parentNode.insertBefore(line, l.nextSibling); // ugh
 	setTimeout(() => line.classList.remove('insert'), 500)
-	lines = [...$$('body > code > .line')];
+	lines = [...$$(':not(data-lsp) > code > .line')];
 }
 
 async function pushLines(after, lines) {
@@ -212,7 +212,7 @@ function saveLines(...lineNrs) {
 		line.remove();
 		ls.push(line);
 	}
-	lines = [...$$('body > code > .line')];
+	lines = [...$$(':not(data-lsp) > code > .line')];
 	return ls;
 }
 

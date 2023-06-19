@@ -88,8 +88,10 @@ app.get('/', async (_req, res) => {
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
-	${$('.shiki .code-container').html()}
-	${docs}
+	<div id="main">
+		${$('.shiki .code-container').html()}
+		${docs}
+	</div>
 	<script type="module" src="main.js"></script>
 </body>
 </html>
