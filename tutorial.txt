@@ -1,0 +1,32 @@
+firstBlock = `
+	if (depth === 0 || gameOver(node)) {
+		return {value: heuristic(), state: node};
+	}
+`
+
+ifBlock:
+	if (maximizingPlayer) {
+	
+	} else
+
+	}
+
+maximizingBlock:
+		let value = -Infinity;
+		let state = null;
+		for (const child of moves(node)) {
+			const {value: newValue, state: newState} = minimax(child, depth - 1, false);
+			state = value > newValue ? state : newState
+			value = Math.max(value, newValue)
+		}
+		return {value, state};
+
+minimizingBlock:
+		let value = -Infinity;
+		let state = null;
+		for (const child of moves(node)) {
+			const {value: newValue, state: newState} = minimax(child, depth - 1, false);
+			state = value > newValue ? state : newState
+			value = Math.max(value, newValue)
+		}
+		return {value, state};

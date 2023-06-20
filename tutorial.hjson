@@ -1,0 +1,70 @@
+{
+	"codeRaw": 
+		'''
+		// @errors: 2300
+		type Node = {board: Array<number>};
+		type Heuristic = number;
+		type IdealMove = {value: Heuristic, state: Node | null}
+
+		function heuristic(): Heuristic {
+			return 0;
+		}
+
+		function moves(node: Node): Array<Node> {
+			return []
+		}
+
+		function gameOver(node: Node): boolean {
+			return Math.random() > 0.5 ? true : false;
+		}
+
+		// ---cut---
+		function minimax(node: Node, depth: number, maximizingPlayer: boolean): IdealMove {
+			if (depth === 0 || gameOver(node)) {
+				return {value: heuristic(), state: node};
+			}
+		 
+			if (maximizingPlayer) {
+				let value = -Infinity;
+				let state = null;
+				for (const child of moves(node)) {
+					const {value: newValue, state: newState} = minimax(child, depth - 1, false);
+					state = value > newValue ? state : newState
+					value = Math.max(value, newValue)
+				}
+				return {value, state};
+			} else {
+				let value = -Infinity;
+				let state = null;
+				for (const child of moves(node)) {
+					const {value: newValue, state: newState} = minimax(child, depth - 1, false);
+					state = value > newValue ? state : newState
+					value = Math.max(value, newValue)
+				}
+				return {value, state};
+			}
+		}
+		'''
+	"first_block": [2, 3, 4, 5]
+	"if_block": [2, 11, 20]
+	"maximizing_block": [2, 3, 4, 5, 6, 7, 8, 9]
+	"minimizing_block": [2, 3, 4, 5, 6, 7, 8, 9]
+
+	"instructions": [
+		[
+			"push 1 first_block" // remove first block
+			"focus* 2 3 4 5 6 7 8 9 10 11" // no old focus so defocus all
+		]
+		"focus 3" // focus old
+		[
+			"defocus"
+			"push 5 if_block"
+		]
+		[
+			"focus* 1 13 14 15" // defocus
+			"focus* 6 4" // defocus
+		]
+		"push 6 maximizing_block"
+		"push 15 maximizing_block"
+	]
+}
