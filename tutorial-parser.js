@@ -31,7 +31,7 @@ module.exports = async () => {
 
 	const command_map = {
 		focus: (...args) => `focusLine(${args.join(', ')})`,
-		'focus*': (...args) => `focusLine(${args[0]}); focusToken([${args.join(', ')}])`,
+		'focus*': (...args) => `focusToken([${args.join(', ')}])`,
 		defocus: () => 'defocus()',
 		remove: (...args) => `await removeLine(${args.join(', ')})`,
 		push: (number, block) => `await pushLines(${number}, ${block})`
@@ -119,10 +119,10 @@ module.exports = async () => {
 
 	const code = `
 function htmlToElement(html) {
-    const template = document.createElement('template');
-    html = html.trim(); // Never return a text node of whitespace as the result
-    template.innerHTML = html;
-    return template.content.firstChild;
+	const template = document.createElement('template');
+	html = html.trim(); // Never return a text node of whitespace as the result
+	template.innerHTML = html;
+	return template.content.firstChild;
 }
 
 ${Object.entries(rest).map(([k, v]) => `const ${k} = ${JSON.stringify(v)}.map(htmlToElement);`).join('\n\n')}

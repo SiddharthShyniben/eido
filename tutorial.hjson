@@ -46,12 +46,12 @@
 				}
 				return {value, state};
 			} else {
-				let value = -Infinity;
+				let value = Infinity;
 				let state = null;
 				for (const child of moves(node)) {
 					const {value: newValue, state: newState} = minimax(child, depth - 1, false);
-					state = value > newValue ? state : newState
-					value = Math.max(value, newValue)
+					state = value < newValue ? state : newState
+					value = Math.min(value, newValue)
 				}
 				return {value, state};
 			}
@@ -64,19 +64,27 @@
 
 	"instructions": [
 		[
-			"push 1 first_block" // remove first block
-			"focus* 2 3 4 5 6 7 8 9 10 11" // no old focus so defocus all
+			"push 1 first_block"
+			"focus 2"
+			"focus* 2 3 4 5 6 7 8 9 10 11"
 		]
-		"focus 3" // focus old
+		[
+			"defocus"
+			"focus 3"
+		]
 		[
 			"defocus"
 			"push 5 if_block"
 		]
 		[
-			"focus* 1 13 14 15" // defocus
-			"focus* 6 4" // defocus
+			"focus 1 6"
+			"focus* 1 13 14 15"
+			"focus* 6 4"
 		]
-		"push 6 maximizing_block"
-		"push 14 minimizing_block"
+		[
+			"defocus"
+			"push 6 maximizing_block"
+		]
+		"push 15 minimizing_block"
 	]
 }

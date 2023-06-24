@@ -30,6 +30,7 @@ const previous = $('#previous');
 const nextFn = async () => {
 	if (i < steps.length) {
 		disableButtons();
+		console.log(steps[i].forward);
 		await steps[i].forward();
 		i++;
 		enableButtons();
@@ -40,6 +41,7 @@ const prevFn = async () => {
 	if (i > 0) {
 		disableButtons();
 		i--;
+		console.log(steps[i].backward);
 		await steps[i].backward();
 		enableButtons();
 	}
@@ -84,7 +86,7 @@ function focusToken(...locs) {
 }
 
 function removeLine(...lineNrs) {
-	return new Promise((resolve) => {
+	return new Promise(resolve => {
 		const animations = [];
 
 		for (const l of lineNrs) {
