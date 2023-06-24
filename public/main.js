@@ -20,25 +20,64 @@ $$('data-lsp').forEach(el => {
 	el.removeAttribute('lsp');
 })
 
+class AsyncQueue {
+	constructor() {
+		this.functions = [];
+		this.executing = false;
+	}
+
+	enqueue(fn, execute = true) {
+		console.log('QUEUED')
+		this.functions.push(fn);
+		if (!this.executing && execute) this.execute();
+	}
+
+	async execute() {
+		this.executing = true;
+		if (!this.functions.length) return;
+
+		while (this.functions.length) {
+			const fn = this.functions.shift();
+			console.log('CALL');
+			await fn();
+		}
+
+		this.executing = false;
+	}
+
+	makeFunction(fn) {
+		console.log(fn);
+		return (...args) => this.enqueue(() => fn(...args));
+	}
+}
+
+const queue = new AsyncQueue();
+
 let i = 0;
 const next = $('#next');
 const previous = $('#previous');
 
 const nextFn = async () => {
 	if (i < steps.length) {
-		disableButtons();
 		await steps[i++].forward();
 	}
 };
 
 const prevFn = async () => {
 	if (i > 0) {
-		disableButtons();
 		await steps[--i].backward();
 	}
 }
 
-function focusLine(...lineNrs) {
+const focusLine = queue.makeFunction(_focusLine)
+const focusToken = queue.makeFunction(_focusToken)
+const removeLine = queue.makeFunction(_removeLine);
+const saveLine = queue.makeFunction(_saveLine);
+const pushLine = queue.makeFunction(_pushLine);
+const pushLines = queue.makeFunction(_pushLines);
+const defocus = queue.makeFunction(_defocus);
+
+function _focusLine(...lineNrs) {
 	lines.forEach((line, i) => {
 		if (lineNrs.includes(i + 1)) {
 			line.classList.add('focus');
@@ -50,7 +89,7 @@ function focusLine(...lineNrs) {
 	})
 }
 
-function focusToken(...locs) {
+function _focusToken(...locs) {
 	locs.forEach(loc => {
 		const [lineNr, ...tokenNrs] = loc;
 		lines[lineNr - 1].childNodes.forEach((node, i) => {
@@ -65,7 +104,7 @@ function focusToken(...locs) {
 	});
 }
 
-function removeLine(...lineNrs) {
+function _removeLine(...lineNrs) {
 	return new Promise(resolve => {
 		const animations = [];
 
@@ -104,25 +143,30 @@ function removeLine(...lineNrs) {
 	});
 }
 
-function saveLine(l) {
+function _saveLine(l) {
 	const line = lines[l - 1];
 	line.remove();
 	lines = [...$$(':not(data-lsp) > code > .line')];
 	return line;
 }
 
-async function pushLine(after, line) {
-	const l = lines[after - 1];
-	line.classList.add('insert');
-	l.parentNode.insertBefore(line, l.nextSibling); // ugh
-	setTimeout(() => line.classList.remove('insert'), 500)
-	lines = [...$$(':not(data-lsp) > code > .line')];
+function _pushLine(after, line) {
+	return new Promise(resolve => {
+		const l = lines[after - 1];
+		line.classList.add('insert');
+		l.parentNode.insertBefore(line, l.nextSibling); // ugh
+		lines = [...$$(':not(data-lsp) > code > .line')];
+		setTimeout(() => resolve(line.classList.remove('insert')), 500)
+	})
 }
 
-async function pushLines(after, lines) {
+async function _pushLines(after, lines) {
+	const ps = [];
 	for (let i = 0; i < lines.length; i++) {
-		await pushLine(after + i, lines[i]);
+		ps.push(_pushLine(after + i, lines[i]));
 	}
+
+	await Promise.all(ps);
 }
 
 function saveLines(...lineNrs) {
@@ -136,7 +180,7 @@ function saveLines(...lineNrs) {
 	return ls;
 }
 
-function defocus() {
+function _defocus() {
 	$$('.dim, .focus').forEach(el => {
 		el.classList.remove('dim', 'focus')
 	})

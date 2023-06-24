@@ -1,17 +1,5 @@
 {
-	"docs":
-		'''
-		<div id=docs>
-			<p id=p1>Today, we implement a lil minimax function</p>
-			<p id=p2>First, we need to check if the game is over or is out of bounds</p>
-			<p id=p3>If then, we return the state of the board. This will help in recursion.</p>
-			<p id=p4>From here, we have to do different things depending on whether we are choosing the best move (for the maximizingPlayer) or the worst (best for the opponent)</p>
-			<p id=p5>As you can see, the maximizingPlayer argument is passed into the function. This is flipped whenever the function calls itself recursively so that we alternate correctly between moves good for us and moves good for the opponent</p>
-			<p id=p6>If we are maximizing, we recursively find the best possible move and then return the heuristic for that...</p>
-			<p id=p7>...and vice versa</p>
-		</div>
-		'''
-	"codeRaw": 
+	"code_raw": 
 		'''
 		// @errors: 2300
 		type Node = {board: Array<number>};
@@ -58,33 +46,42 @@
 		}
 		'''
 	"first_block": [2, 3, 4, 5]
-	"if_block": [2, 11, 20]
-	"maximizing_block": [2, 3, 4, 5, 6, 7, 8, 9]
-	"minimizing_block": [2, 3, 4, 5, 6, 7, 8, 9]
+	"if_block": [6, 15, 24]
+	"maximizing_block": [7, 8, 9, 10, 11, 12, 13, 14]
+	"minimizing_block": [16, 17, 18, 19, 20, 21, 22, 23]
 
 	"instructions": [
+		"Today, we implement a lil minimax function"
 		[
+			"First, we need to check if the game is over or is out of bounds"
 			"push 1 first_block"
 			"focus 2"
 			"focus* 2 3 4 5 6 7 8 9 10 11"
 		]
 		[
+			"If then, we return the state of the board. This will help in recursion."
 			"defocus"
 			"focus 3"
 		]
 		[
+			"From here, we have to do different things depending on whether we are choosing the best move (for the maximizingPlayer) or the worst (best for the opponent)"
 			"defocus"
 			"push 5 if_block"
 		]
 		[
+			"As you can see, the maximizingPlayer argument is passed into the function. This is flipped whenever the function calls itself recursively so that we alternate correctly between moves good for us and moves good for the opponent"
 			"focus 1 6"
 			"focus* 1 13 14 15"
 			"focus* 6 4"
 		]
 		[
+			"If we are maximizing, we recursively find the best possible move and then return the heuristic for that..."
 			"defocus"
 			"push 6 maximizing_block"
 		]
-		"push 15 minimizing_block"
+		[
+			"...and vice versa"
+			"push 15 minimizing_block"
+		]
 	]
 }
