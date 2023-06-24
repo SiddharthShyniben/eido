@@ -11,17 +11,14 @@ for (let line of init) {
 main.innerHTML += docsCode;
 
 let lines = [...$$(':not(data-lsp) > code > .line')];
-console.log(lines);
 const docs = $("#docs");
 const docEntries = $$("#docs p");
-// let logLines = [...$$('.logger')]
 
 $$('data-lsp').forEach(el => {
 	const node = document.createRange().createContextualFragment(el.getAttribute('lsp'))
 	el.appendChild(node.querySelector('code'));
 	el.removeAttribute('lsp');
 })
-
 
 let i = 0;
 const next = $('#next');
@@ -30,32 +27,15 @@ const previous = $('#previous');
 const nextFn = async () => {
 	if (i < steps.length) {
 		disableButtons();
-		console.log(steps[i].forward);
-		await steps[i].forward();
-		i++;
-		enableButtons();
+		await steps[i++].forward();
 	}
 };
 
 const prevFn = async () => {
 	if (i > 0) {
 		disableButtons();
-		i--;
-		console.log(steps[i].backward);
-		await steps[i].backward();
-		enableButtons();
+		await steps[--i].backward();
 	}
-}
-
-// next.addEventListener('click', nextFn)
-// previous.addEventListener('click', prevFn)
-
-function disableButtons() {
-	// previous.disabled = next.disabled = true;
-}
-
-function enableButtons() {
-	// previous.disabled = next.disabled = false;
 }
 
 function focusLine(...lineNrs) {
@@ -140,7 +120,6 @@ async function pushLine(after, line) {
 }
 
 async function pushLines(after, lines) {
-	console.log(lines);
 	for (let i = 0; i < lines.length; i++) {
 		await pushLine(after + i, lines[i]);
 	}
@@ -150,7 +129,6 @@ function saveLines(...lineNrs) {
 	const ls = [];
 	for (const l of lineNrs) {
 		const line = lines[l - 1];
-		console.log(l, line);
 		line.remove();
 		ls.push(line);
 	}
@@ -178,13 +156,10 @@ function callback(entries) {
 		const id = +target.id.slice(1);
 
 		if (!isIntersecting) return;
-		console.log(id, isIntersecting);
 
-		if (id > lastIntersecting) {
-			nextFn();
-		} else if (id < lastIntersecting) {
-			prevFn();
-		}
+		if (id > lastIntersecting) nextFn();
+		else if (id < lastIntersecting) prevFn();
+
 		lastIntersecting = id;
 	});
 }
