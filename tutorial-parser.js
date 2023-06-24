@@ -5,12 +5,14 @@ const cheerio = require('cheerio');
 
 const content = readFileSync('./tutorial.hjson', 'utf8');
 
-const {instructions, codeRaw, ...rest} = hjson.parse(content);
+const {instructions, codeRaw, docs, ...rest} = hjson.parse(content);
 
 const steps = [];
 const undos = [];
 
-(async () => {
+const init = 'init';
+
+module.exports = async () => {
 	const highlighter = await createShikiHighlighter({ theme: "dark-plus" })
 
 	function makeCode() {
@@ -29,10 +31,10 @@ const undos = [];
 
 	const command_map = {
 		focus: (...args) => `focusLine(${args.join(', ')})`,
-		'focus*': (...args) => `focusLine(${args[0]}); focusToken(${args.join(', ')})`,
+		'focus*': (...args) => `focusLine(${args[0]}); focusToken([${args.join(', ')}])`,
 		defocus: () => 'defocus()',
 		remove: (...args) => `await removeLine(${args.join(', ')})`,
-		push: (number, block) => `await push(${number}, ${block})`
+		push: (number, block) => `await pushLines(${number}, ${block})`
 	}
 
 	const fullCode = makeCode();
@@ -42,18 +44,24 @@ const undos = [];
 		const l = [];
 		const toRemove = [];
 
-		console.log(k);
 		for (const i of rest[k]) {
 			const el = $(`code > .line:not(.line .line):nth-child(${i})`)
 			l.push(el.prop('outerHTML'));
-			console.log(el.text())
 			toRemove.push(el);
 		}
 		toRemove.forEach(x => x.remove())
-		console.log()
 
-		rest[k] = l;
+	rest[k] = l;
 	}
+
+	const initCode = [];
+	const els = $(`code > .line`);
+	els.each((_, el) => {
+		el = $(el);
+		initCode.push(el.prop('outerHTML'));
+		el.remove();
+	})
+	rest[init] = initCode;
 
 	let i = 0;
 	for (const instruction of instructions) {
@@ -80,14 +88,14 @@ const undos = [];
 
 		if (
 			i !== 0 &&
-			shouldDefocus &&
-			!steps[i - 1].includes('defocus()')
+				shouldDefocus &&
+				!steps[i - 1].includes('defocus()')
 		) steps[i].unshift('defocus()');
 
 		if (steps[i - 1]) {
 			undos[i].push(
 				...[...steps[i - 1]]
-					.filter(x => !x.startsWith('push'))
+				.filter(x => !x.startsWith('push'))
 			);
 		}
 		if (steps[i].find(x => x === 'defocus()')) undos[i] = undos[i].filter(x => x !== 'defocus()');
@@ -99,28 +107,41 @@ const undos = [];
 	for (let i = 0; i < steps.length; i++) {
 		steps[i] = steps[i].map(step => {
 			const [fn, args] = step.split(/\(|\)/);
+			console.error({fn, args});
+			return command_map[fn](...(args || '').split(',').map(x => x.trim()).filter(Boolean))
+		})
+		undos[i] = undos[i].map(step => {
+			const [fn, args] = step.split(/\(|\)/);
+			console.error({fn, args});
 			return command_map[fn](...(args || '').split(',').map(x => x.trim()).filter(Boolean))
 		})
 	}
 
 	const code = `
-function fragmentFromString(strHTML) {
-	return document.createRange().createContextualFragment(strHTML);
+function htmlToElement(html) {
+    const template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    return template.content.firstChild;
 }
 
-${Object.entries(rest).map(([k, v]) => `const ${k} = ${JSON.stringify(v)}`).join('\n\n')}.map(fragmentFromString);
+${Object.entries(rest).map(([k, v]) => `const ${k} = ${JSON.stringify(v)}.map(htmlToElement);`).join('\n\n')}
 
 const steps = [
 ${steps.map((step, i) => `{
-		forward: async () => {
+forward: async () => {
 ${step.map(x => `\t\t\t` + x).join('\n')}
-		},
-		backward: async () => {
+},
+backward: async () => {
 ${undos[i].map(x => `\t\t\t` + x).join('\n')}
-		}
-	},
+}
+},
 `).join('')}
-]`.trim();
+];
 
-	console.log(code)
-})();
+const docsCode = ${JSON.stringify(docs)};
+
+`.trim();
+
+	return code;
+}

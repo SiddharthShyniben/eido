@@ -2,87 +2,26 @@ const $ = (...args) => document.querySelector(...args);
 const $$ = (...args) => document.querySelectorAll(...args);
 const sleep = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms));
 
-const code = $('.code-container');
+const code = $('.code-container code');
+
+for (let line of init) {
+	code.appendChild(line);
+}
+
+main.innerHTML += docsCode;
+
 let lines = [...$$(':not(data-lsp) > code > .line')];
 console.log(lines);
 const docs = $("#docs");
 const docEntries = $$("#docs p");
 // let logLines = [...$$('.logger')]
 
-// UGH
 $$('data-lsp').forEach(el => {
 	const node = document.createRange().createContextualFragment(el.getAttribute('lsp'))
 	el.appendChild(node.querySelector('code'));
 	el.removeAttribute('lsp');
 })
 
-const firstBlock = saveLines(2, 3, 4, 5);
-const ifBlock = saveLines(2, 11, 20);
-const maximizingBlock = saveLines(2, 3, 4, 5, 6, 7, 8, 9)
-const minimizingBlock = saveLines(2, 3, 4, 5, 6, 7, 8, 9)
-
-const steps = [
-	{
-		forward: async () => {
-			await pushLines(1, firstBlock);
-			focus(2);
-			focusToken([2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-		},
-		backward: async () => {
-			clearFocus();
-			await removeLine(2, 3, 4, 5);
-		}
-	},
-	{
-		forward: () => {
-			clearFocus();
-			focus(3);
-		},
-		backward: () => {
-			clearFocus();
-			focus(2);
-			focusToken([2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-		}
-	},
-	{
-		forward: async () => {
-			clearFocus();
-			await pushLines(5, ifBlock);
-		},
-		backward: async () => {
-			await removeLine(6, 7, 8);
-			focus(3);
-		}
-	},
-	{
-		forward: () => {
-			focus(1, 6);
-			focusToken([1, 13, 14, 15], [6, 4])
-		},
-		backward: () => {
-			clearFocus();
-		}
-	},
-	{
-		forward: async () => {
-			clearFocus();
-			await pushLines(6, maximizingBlock)
-		},
-		backward: async () => {
-			await removeLine(7, 8, 9, 10, 11, 12, 13, 14)
-			focus(1, 6);
-			focusToken([1, 13, 14, 15], [6, 4])
-		}
-	},
-	{
-		forward: async () => {
-			await pushLines(15, minimizingBlock)
-		},
-		backward: async () => {
-			await removeLine(16, 17, 18, 19, 20, 21, 22, 23)
-		}
-	}
-];
 
 let i = 0;
 const next = $('#next');
@@ -117,7 +56,7 @@ function enableButtons() {
 	// previous.disabled = next.disabled = false;
 }
 
-function focus(...lineNrs) {
+function focusLine(...lineNrs) {
 	lines.forEach((line, i) => {
 		if (lineNrs.includes(i + 1)) {
 			line.classList.add('focus');
@@ -199,6 +138,7 @@ async function pushLine(after, line) {
 }
 
 async function pushLines(after, lines) {
+	console.log(lines);
 	for (let i = 0; i < lines.length; i++) {
 		await pushLine(after + i, lines[i]);
 	}
@@ -216,15 +156,15 @@ function saveLines(...lineNrs) {
 	return ls;
 }
 
-function clearFocus() {
+function defocus() {
 	$$('.dim, .focus').forEach(el => {
 		el.classList.remove('dim', 'focus')
 	})
 }
 
 const observerOptions = {
-  root: docs,
-  threshold: 0.5,
+	root: docs,
+	threshold: 0.5,
 };
 
 const observer = new IntersectionObserver(callback, observerOptions);
