@@ -2,15 +2,16 @@ const $ = (...args) => document.querySelector(...args);
 const $$ = (...args) => document.querySelectorAll(...args);
 const sleep = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms));
 
-const code = $('.code-container code');
+main.innerHTML += docsCode;
+const code = $('code');
+console.log(code);
 
 for (let line of init) {
 	code.appendChild(line);
 }
 
-main.innerHTML += docsCode;
 
-let lines = [...$$(':not(data-lsp) > code > .line')];
+let lines = [...$$('.line:not(.line .line)')];
 const docs = $("#docs");
 const docEntries = $$("#docs p");
 
@@ -131,7 +132,7 @@ function _removeLine(...lineNrs) {
 						sleep(500).then(() => {
 							line.classList.remove('remove');
 							line.remove();
-							lines = [...$$(':not(data-lsp) > code > .line')];
+							lines = [...$$('.line:not(.line .line)')];
 							resolve();
 						});
 					});
@@ -146,18 +147,22 @@ function _removeLine(...lineNrs) {
 function _saveLine(l) {
 	const line = lines[l - 1];
 	line.remove();
-	lines = [...$$(':not(data-lsp) > code > .line')];
+	lines = [...$$('.line:not(.line .line)')];
 	return line;
 }
 
 function _pushLine(after, line) {
-	return new Promise(resolve => {
-		const l = lines[after - 1];
-		line.classList.add('insert');
+	line.classList.add('insert');
+
+	const l = lines[after - 1];
+	if (l) {
 		l.parentNode.insertBefore(line, l.nextSibling); // ugh
-		lines = [...$$(':not(data-lsp) > code > .line')];
-		setTimeout(() => resolve(line.classList.remove('insert')), 500)
-	})
+	} else {
+		code.appendChild(line);
+	}
+
+	lines = [...$$('.line:not(.line .line)')];
+	return new Promise(resolve => setTimeout(() => resolve(line.classList.remove('insert')), 500))
 }
 
 async function _pushLines(after, lines) {
@@ -176,7 +181,7 @@ function saveLines(...lineNrs) {
 		line.remove();
 		ls.push(line);
 	}
-	lines = [...$$(':not(data-lsp) > code > .line')];
+	lines = [...$$('.line:not(.line .line)')];
 	return ls;
 }
 

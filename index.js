@@ -9,27 +9,29 @@ let generatedCode;
 
 // TODO: // ^? support?
 (async () => {
-	generatedCode = `
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<link rel="stylesheet" href="style.css">
-	</head>
-	<body>
-		<div id="main">
-			<div class="code-container"><code></code></div>
-		</div>
-		<script>${await genCode()}</script>
-		<script src="main.js"></script>
-	</body>
-	</html>
-	`.trim();
 })()
 
 app.use(morgan('tiny'))
 app.use(express.static(join(__dirname, 'public')))
 
 app.get('/', async (_req, res) => {
+	if (!generatedCode) {
+		await genCode();
+		generatedCode = `
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="main">
+	<div class="code-container"><code></code></div>
+</div>
+<script src="vars.js"></script>
+<script src="main.js"></script>
+</body>
+</html>`.trim();
+	}
 	// const highlighter = await createShikiHighlighter({ theme: "dark-plus" })
 	// const twoslash = runTwoSlash(code, "ts", {})
 	// const html = renderCodeToHTML(twoslash.code, "ts", { twoslash: true }, {}, highlighter, twoslash)

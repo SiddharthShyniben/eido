@@ -1,5 +1,5 @@
 const hjson = require('hjson');
-const { readFileSync } = require('fs');
+const { readFileSync, writeFileSync } = require('fs');
 const { createShikiHighlighter, runTwoSlash, renderCodeToHTML } = require('shiki-twoslash');
 const cheerio = require('cheerio');
 
@@ -26,6 +26,8 @@ const _id = (function* () {
 const id = () => _id.next().value;
 const para = text => `<p id=p${id()}>${text}</p>`
 
+// console.log(code_raw.split('\n').map(l => l.length + '   ' + l).join('\n'))
+
 module.exports = async () => {
 	const highlighter = await createShikiHighlighter({ theme: "dark-plus" })
 
@@ -42,17 +44,22 @@ module.exports = async () => {
 	const fullCode = makeCode();
 	const $ = cheerio.load(fullCode);
 
+	// $('.line:not(.line .line)').each((i, el) => console.log(i + 1, $(el).text()))
+
 	const toRemove = [];
 	for (const k in rest) {
+		// console.log(k)
 		const l = [];
 
 		for (const i of rest[k]) {
-			const el = $(`code > .line:not(.line .line):nth-child(${i})`)
+			const el = $(`.line:not(.line .line):eq(${i - 1})`)
 			l.push(el.prop('outerHTML'));
 			toRemove.push(el);
+			// console.log(i, el?.text())
 		}
 
 		rest[k] = l;
+		// console.log()
 	}
 	toRemove.forEach(x => x.remove())
 
@@ -63,7 +70,7 @@ module.exports = async () => {
 		initCode.push(el.prop('outerHTML'));
 		el.remove();
 	})
-	rest['init'] = initCode;
+	rest.init = initCode;
 
 	let docs = para(instructions.shift());
 
@@ -137,6 +144,8 @@ const steps = [
 const docsCode = ${JSON.stringify(`<div id="docs">${docs}</div>`)};
 
 `.trim();
+
+	writeFileSync('./public/vars.js', code);
 
 	return code;
 }
