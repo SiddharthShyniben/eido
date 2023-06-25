@@ -3,32 +3,13 @@ const { readFileSync, writeFileSync } = require('fs');
 const { createShikiHighlighter, runTwoSlash, renderCodeToHTML } = require('shiki-twoslash');
 const cheerio = require('cheerio');
 
-const content = readFileSync('./tutorial.hjson', 'utf8');
-
-const {instructions, code_raw, ...rest} = hjson.parse(content);
-
-const steps = [];
-const undos = [];
-
-const command_map = {
-	focus: (...args) => `focusLine(${args.join(', ')})`,
-	'focus*': (...args) => `focusToken([${args.join(', ')}])`,
-	defocus: () => 'defocus()',
-	remove: (...args) => `await removeLine(${args.join(', ')})`,
-	push: (number, block) => `await pushLines(${number}, ${block})`
-}
-
-const _id = (function* () {
-	let i = 0;
-	while (true) yield ++i;
-})()
 
 const id = () => _id.next().value;
 const para = text => `<p id=p${id()}>${text}</p>`
 
-// console.log(code_raw.split('\n').map(l => l.length + '   ' + l).join('\n'))
-
 module.exports = async () => {
+	const content = readFileSync('./tutorial.hjson', 'utf8');
+	const {instructions, code_raw, ...rest} = hjson.parse(content);
 	const highlighter = await createShikiHighlighter({ theme: "dark-plus" })
 
 	function makeCode() {
@@ -42,24 +23,58 @@ module.exports = async () => {
 	}
 
 	const fullCode = makeCode();
-	const $ = cheerio.load(fullCode);
+	splitCode(fullCode, rest);
 
-	// $('.line:not(.line .line)').each((i, el) => console.log(i + 1, $(el).text()))
+	const {steps, undos, docs} = convertInstructions(instructions, rest);
+	convertStepsToCommands(steps, undos)
+
+	const code = makeFile(rest, steps, undos, docs);
+	writeFileSync('./public/vars.js', code);
+
+	return code;
+}
+
+function makeFile(rest, steps, undos, docs) {
+	return `
+function htmlToElement(html) {
+	const template = document.createElement('template');
+	html = html.trim(); // Never return a text node of whitespace as the result
+	template.innerHTML = html;
+	return template.content.firstChild;
+}
+
+${Object.entries(rest).map(([k, v]) => `const ${k} = ${JSON.stringify(v)}.map(htmlToElement);`).join('\n\n')}
+
+const steps = [
+	${steps.map((step, i) => `{
+		forward: async () => {
+			${step.join('\n')}
+		},
+		backward: async () => {
+			${undos[i].join('\n')}
+		}
+	},`).join('\n')}
+];
+
+const docsCode = ${JSON.stringify(`<div id="docs">${docs}</div>`)};
+
+`.trim();
+}
+
+function splitCode(fullCode, rest) {
+	const $ = cheerio.load(fullCode);
 
 	const toRemove = [];
 	for (const k in rest) {
-		// console.log(k)
 		const l = [];
 
 		for (const i of rest[k]) {
 			const el = $(`.line:not(.line .line):eq(${i - 1})`)
 			l.push(el.prop('outerHTML'));
 			toRemove.push(el);
-			// console.log(i, el?.text())
 		}
 
 		rest[k] = l;
-		// console.log()
 	}
 	toRemove.forEach(x => x.remove())
 
@@ -71,7 +86,11 @@ module.exports = async () => {
 		el.remove();
 	})
 	rest.init = initCode;
+}
 
+function convertInstructions(instructions, rest) {
+	const steps = [];
+	const undos = [];
 	let docs = para(instructions.shift());
 
 	for (const [i, instruction] of instructions.entries()) {
@@ -103,49 +122,35 @@ module.exports = async () => {
 		) steps[i].unshift('defocus()');
 
 		if (steps[i - 1]) undos[i].push(...[...steps[i - 1]].filter(x => !x.startsWith('push')));
-
 		if (steps[i].find(x => x === 'defocus()')) undos[i] = undos[i].filter(x => x !== 'defocus()');
 
 		undos[i] = [...new Set(undos[i])];
 	}
 
-	for (let i = 0; i < steps.length; i++) {
-		steps[i] = steps[i].map(step => {
-			const [fn, args] = step.split(/\(|\)/);
-			return command_map[fn](...(args || '').split(',').map(x => x.trim()).filter(Boolean))
-		})
-		undos[i] = undos[i].map(step => {
-			const [fn, args] = step.split(/\(|\)/);
-			return command_map[fn](...(args || '').split(',').map(x => x.trim()).filter(Boolean))
-		})
+	return {steps, undos, docs};
+}
+
+const command_map = {
+	focus: (...args) => `focusLine(${args.join(', ')})`,
+	'focus*': (...args) => `focusToken([${args.join(', ')}])`,
+	defocus: () => 'defocus()',
+	remove: (...args) => `await removeLine(${args.join(', ')})`,
+	push: (number, block) => `await pushLines(${number}, ${block})`
+}
+
+function convertStepsToCommands(steps, undos) {
+	const stepToCmd = step => {
+		const [fn, args] = step.split(/\(|\)/);
+		return command_map[fn](...(args || '').split(',').map(x => x.trim()).filter(Boolean))
 	}
 
-	const code = `
-function htmlToElement(html) {
-	const template = document.createElement('template');
-	html = html.trim(); // Never return a text node of whitespace as the result
-	template.innerHTML = html;
-	return template.content.firstChild;
+	for (let i = 0; i < steps.length; i++) {
+		steps[i] = steps[i].map(stepToCmd)
+		undos[i] = undos[i].map(stepToCmd)
+	}
 }
 
-${Object.entries(rest).map(([k, v]) => `const ${k} = ${JSON.stringify(v)}.map(htmlToElement);`).join('\n\n')}
-
-const steps = [
-	${steps.map((step, i) => `{
-		forward: async () => {
-			${step.join('\n')}
-		},
-		backward: async () => {
-			${undos[i].join('\n')}
-		}
-	},`).join('\n')}
-];
-
-const docsCode = ${JSON.stringify(`<div id="docs">${docs}</div>`)};
-
-`.trim();
-
-	writeFileSync('./public/vars.js', code);
-
-	return code;
-}
+const _id = (function* () {
+	let i = 0;
+	while (true) yield ++i;
+})()
