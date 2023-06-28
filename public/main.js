@@ -173,6 +173,7 @@ async function _pushLines(after, lines) {
 	}
 
 	await Promise.all(ps);
+	lines[0].scrollIntoView();
 }
 
 function saveLines(...lineNrs) {
@@ -194,7 +195,7 @@ function _defocus() {
 
 const observerOptions = {
 	root: docs,
-	threshold: 0.5,
+	threshold: 0.1,
 };
 
 const observer = new IntersectionObserver(callback, observerOptions);
