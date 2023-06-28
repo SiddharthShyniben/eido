@@ -15,12 +15,6 @@ let lines = [...$$('.line:not(.line .line)')];
 const docs = $("#docs");
 const docEntries = $$("#docs p");
 
-$$('data-lsp').forEach(el => {
-	const node = document.createRange().createContextualFragment(el.getAttribute('lsp'))
-	el.appendChild(node.querySelector('code'));
-	el.removeAttribute('lsp');
-})
-
 class AsyncQueue {
 	constructor() {
 		this.functions = [];
@@ -160,6 +154,13 @@ function _pushLine(after, line) {
 	} else {
 		code.appendChild(line);
 	}
+
+	$$('data-lsp').forEach(el => {
+		if (!el.getAttribute('lsp')) return;
+		const node = document.createRange().createContextualFragment(el.getAttribute('lsp'))
+		el.appendChild(node.querySelector('code'));
+		el.removeAttribute('lsp');
+	})
 
 	lines = [...$$('.line:not(.line .line)')];
 	return new Promise(resolve => setTimeout(() => resolve(line.classList.remove('insert')), 500))

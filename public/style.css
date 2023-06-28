@@ -148,7 +148,7 @@ data-lsp:hover>code {
 	border-radius: 2px;
 	font-family: "JetBrains Mono", Menlo, Monaco, Consolas, Courier New, monospace;
 	font-size: 14px;
-	white-space: nowrap;
+	white-space: pre;
 	z-index: 999;
 	width: auto;
 }
