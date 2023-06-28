@@ -3,7 +3,7 @@
 		'''
 		// @errors: 1100
 		type State = {};
-		type MinimaxNode = {move: State, eval: number};
+		type MinimaxNode = {move: State, evaluation: number};
 
 		// ---cut---
 		function evaluate(state: State) {
@@ -26,7 +26,7 @@
 			beta: number
 		): MinimaxNode {
 			if (depth === 0 || isTerminalState(state)) {
-				return {move: state, eval: evaluate(state)}
+				return {move: state, evaluation: evaluate(state)}
 			}
 			
 			if (maximizingPlayer) {
@@ -34,35 +34,35 @@
 				let bestMove!: State;
 				
 				for (let childState of generateChildStates(state)) {
-					let {eval} = minimax(childState, depth - 1, false, alpha, beta);
+					let {evaluation} = minimax(childState, depth - 1, false, alpha, beta);
 					
-					if (eval > maxEval) {
-						maxEval = eval;
+					if (evaluation > maxEval) {
+						maxEval = evaluation;
 						bestMove = childState;
 					}
 					
-					alpha = Math.max(alpha, eval);
+					alpha = Math.max(alpha, evaluation);
 					if (beta <= alpha) break;
 				}
 				
-				return {move: bestMove, eval: maxEval};
+				return {move: bestMove, evaluation: maxEval};
 			} else {
 				let minEval = Infinity;
 				let bestMove!: State;
 				
 				for (let childState of generateChildStates(state)) {
-					let {eval} = minimax(childState, depth - 1, true, alpha, beta);
+					let {evaluation} = minimax(childState, depth - 1, true, alpha, beta);
 					
-					if (eval < minEval) {
-						minEval = eval;
+					if (evaluation < minEval) {
+						minEval = evaluation;
 						bestMove = childState;
 					}
 					
-					beta = Math.min(beta, eval);
+					beta = Math.min(beta, evaluation);
 					if (beta <= alpha) break;
 				}
 				
-				return {move: bestMove, eval: minEval};
+				return {move: bestMove, evaluation: minEval};
 			}
 		}
 		'''
@@ -72,7 +72,8 @@
 	"terminal": [6]
 	"children_wrapper": [8, 9, 11]
 	"children": [10]
-	"main_wrapper": [12, 13, 14, 15, 16, 17, 18, 19, 59]
+	"main_wrapper": [12, 13, 14, 15, 16, 19, 59]
+	"alphabeta": [17, 18],
 	"exit_block": [20, 21, 22, 23]
 	"if_stmt": [24, 41, 58]
 
@@ -82,19 +83,13 @@
 	"maximizing_alphabeta": [35, 36, 37]
 	"maximizing_return": [39, 40]
 
-	"minimizing_initvals": [42, 43]
-	"minimizing_loop": [44, 45, 55]
-	"minimizing_logic": [46, 47, 48, 49, 50, 51]
+	"minimizing_block": [42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 55, 56, 57]
 	"minimizing_alphabeta": [52, 53, 54]
-	"minimizing_return": [56, 57]
 
 	"instructions": [
 		"Welcome to the minimax tutorial! In this tutorial, you will learn how to create your own version of the minimax algorithm, along with alpha-beta pruning"
 		[
-			"Before we write the function, there are some prerequisites."
-		]
-		[
-			"First one is the evaluate function, which takes a game board and evaluates how good that position is based on some heuristic"
+			"Before we write the function, there are some prerequisites. <br><br>First one is the evaluate function, which takes a game board and evaluates how good that position is based on some heuristic"
 			"push 0 evaluate_wrapper"
 		]
 		[
@@ -108,6 +103,76 @@
 		[
 			"Once again, we write a dummy function"
 			"push 5 terminal"
+		]
+		[
+			"The final function we need is one to generate all possible \"next\" states from a state, ie. to look at all possible moves"
+			"push 7 children_wrapper"
+		]
+		[
+			"...as usual, dummy"
+			"push 9 children"
+		]
+
+		[
+			"Now, we can get into the meat of the function! The minimax function signature looks like this.<br><br>It takes in game state, depth (to manage recursion) and a boolean value which stores who's turn it is. It returns MinimaxState (hover over for more info!)"
+			"push 11 main_wrapper"
+			"focus 14 15 16 17"
+			"focus* 17 2"
+		]
+		[
+			"First thing we gotta do is make sure we aren't recursing too deep or if the game is over. If we need to exit, we simply return the state of the board at this point. The evaluation of this board will be used later to check if we want to get here, and so we return it."
+			"defocus"
+			"push 17 exit_block"
+			"focus 18 19 20"
+		]
+		[
+			"Now, we have to do different things depending on which player it is.<br><br> This is where the bulk of the logic resides. What the minimax algorithm does in essence is it goes down every move, assuming that both players play the best possible moves, and see which move gives us the best outcome. <br><br>So, while recursing, if we are the maximizingPlayer (or player 1), we try to find the move with the best possible outcome for player 1, and otherwise the worst possible outcome for player 1."
+			"defocus"
+			"push 21 if_stmt"
+		]
+		[
+			"For the maximizingPlayer, we first initalize two variables to hold the best move and it's heuristic"
+			"push 22 maximizing_initvals"
+			"focus 23 24"
+		]
+		[
+			"Now, we loop over each child state..."
+			"push 24 maximizing_loop"
+		]
+		[
+			"...choose the best move..."
+			"push 26 maximizing_logic"
+		]
+		[
+			"...and finally return it!"
+			"push 33 maximizing_return"
+		]
+		[
+			"And now, we just need to do the exact opposite for the else statement!"
+			"defocus"
+			"push 36 minimizing_block"
+			"focus 37 38 39 40 41 42 43 44 45 46 47 48 49"
+		]
+		[
+			"Aaaaand that's it! You now have yourself a working minimax algorithm!<br><br>But you've probably noticed the scrollbar's not at the end yet. That's right! There's more!<br><br>We can actually optimize more: We can choose not to visit any nodes if we already have better solutions than it already.<br><br>Here's an analogy: It's a chess game, and you have two moves. Move A is alright. Move B has two sub moves. We explore one of them and realize it's a forced checkmate. Since we assume that the opponent will choose the ideal move, Move B is then doomed to be checkmate, and hence the second branch of B isn't important anymore, so we ignore it.<br><br>This style of pruning out branches is called Alpha Beta pruning, and it is a very helpful optimization!"
+		]
+		[
+			"Let's go straight to the implementation - first, we need to update our function signature to account for two variables, alpha and beta. Again, this will be used in recursion. alpha is the best move for maximizingPlayer, and beta the worst."
+			"defocus"
+			"push 15 alphabeta"
+			"focus 16 17"
+		]
+		[
+			"Now, if we are maximixing, and the current child move is worse than the parent's, we know that this branch can't end good, so we quit."
+			"push 34 maximizing_alphabeta"
+		]
+		[
+			"And do the same for the minimizing player too..."
+			"push 51 minimizing_alphabeta"
+		]
+		[
+			"And we're finally done! We have a fully functional minimax algorithm with alpha beta pruning!"
+			"defocus"
 		]
 	]
 }
