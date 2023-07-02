@@ -2,62 +2,40 @@ const express = require('express');
 const morgan = require('morgan');
 const {join} = require('path');
 const genCode = require('./tutorial-parser.js');
+const { existsSync } = require('fs');
 const app = express();
 const PORT = 3000;
 
 let generatedCode;
 
-// TODO: // ^? support?
-(async () => {
-})()
-
 app.use(morgan('tiny'))
 app.use(express.static(join(__dirname, 'public')))
 
-app.get('/', async (_req, res) => {
-	if (!generatedCode) {
-		await genCode();
-		generatedCode = `
-<!DOCTYPE html>
-<html>
-<head>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div id="main">
-	<div class="code-container"><code></code></div>
-</div>
-<script src="vars.js"></script>
-<script src="main.js"></script>
-</body>
-</html>`.trim();
-	}
-	// const highlighter = await createShikiHighlighter({ theme: "dark-plus" })
-	// const twoslash = runTwoSlash(code, "ts", {})
-	// const html = renderCodeToHTML(twoslash.code, "ts", { twoslash: true }, {}, highlighter, twoslash)
-	//
-	// const $ = cheerio.load(html)
-	//
-	// $('data-lsp').each((_, el) => {
-	// 	const content = el.attribs.lsp;
-	// 	el.attribs.lsp = highlighter.codeToHtml(content, {lang: 'typescript'});
-	// })
+app.get('/', (_req, res) => {
+	res.send('<a href="/minimax">Minimax</a>');
+});
 
-// 	res.send(`
-// <!DOCTYPE html>
-// <html>
-// <head>
-// 	<link rel="stylesheet" href="style.css">
-// </head>
-// <body>
-// 	<div id="main">
-// 		${$('.shiki .code-container').html()}
-// 		${docs}
-// 	</div>
-// 	<script type="module" src="main.js"></script>
-// </body>
-// </html>
-// `.trim());
+app.get('/:tutorial', async (req, res) => {
+	const filePath = join(__dirname, 'tutorials', `${req.params.tutorial}.hjson`)
+	if (!existsSync(filePath)) {
+		return res.redirect('/')
+	}
+	const code = await genCode(filePath);
+	generatedCode = `
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<link rel="stylesheet" href="style.css">
+		</head>
+	<body>
+		<div id="main">
+			<div class="code-container"><code></code></div>
+		</div>
+
+		<script>${code}</script>
+		<script src="main.js"></script>
+	</body>
+	</html>`.trim();
 	
 	res.send(generatedCode);
 });

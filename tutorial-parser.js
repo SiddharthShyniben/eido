@@ -3,12 +3,11 @@ const { readFileSync, writeFileSync } = require('fs');
 const { createShikiHighlighter, runTwoSlash, renderCodeToHTML } = require('shiki-twoslash');
 const cheerio = require('cheerio');
 
-
 const id = () => _id.next().value;
 const para = text => `<p id=p${id()}>${text}</p>`
 
-module.exports = async () => {
-	const content = readFileSync('./tutorial.hjson', 'utf8');
+module.exports = async (path) => {
+	const content = readFileSync(path, 'utf8');
 	const {instructions, code_raw, ...rest} = hjson.parse(content);
 	const highlighter = await createShikiHighlighter({ theme: "dark-plus" })
 
@@ -29,8 +28,6 @@ module.exports = async () => {
 	convertStepsToCommands(steps, undos)
 
 	const code = makeFile(rest, steps, undos, docs);
-	writeFileSync('./public/vars.js', code);
-
 	return code;
 }
 
@@ -85,6 +82,7 @@ function splitCode(fullCode, rest) {
 		initCode.push(el.prop('outerHTML'));
 		el.remove();
 	})
+	
 	rest.init = initCode;
 }
 
