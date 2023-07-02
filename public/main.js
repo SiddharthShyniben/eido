@@ -173,7 +173,10 @@ async function _pushLines(after, lines) {
 	}
 
 	await Promise.all(ps);
-	lines[0].scrollIntoView();
+	console.log(lines[Math.ceil(lines.length / 2)])
+	lines[Math.ceil(lines.length - 1)].scrollIntoView({
+		behavior: 'smooth', block: 'center', inline: 'center'
+	});
 }
 
 function saveLines(...lineNrs) {
