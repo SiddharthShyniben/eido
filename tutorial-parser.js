@@ -1,21 +1,21 @@
-const hjson = require('hjson');
-const { readFileSync, writeFileSync } = require('fs');
-const { createShikiHighlighter, runTwoSlash, renderCodeToHTML } = require('shiki-twoslash');
-const cheerio = require('cheerio');
+import { parse } from 'hjson';
+import { readFileSync } from 'fs';
+import { createShikiHighlighter, runTwoSlash, renderCodeToHTML } from 'shiki-twoslash';
+import { load } from 'cheerio';
 
 const id = () => _id.next().value;
 const para = text => `<p id=p${id()}>${text}</p>`
 
-module.exports = async (path) => {
+export default async (path) => {
 	const content = readFileSync(path, 'utf8');
-	const {instructions, code_raw, ...rest} = hjson.parse(content);
+	const {instructions, code_raw, ...rest} = parse(content);
 	const highlighter = await createShikiHighlighter({ theme: "dark-plus" })
 
 	function makeCode() {
 		const twoslash = runTwoSlash(code_raw, "ts", {})
 		const html = renderCodeToHTML(twoslash.code, "ts", { twoslash: true }, {}, highlighter, twoslash)
 
-		const $ = cheerio.load(html);
+		const $ = load(html);
 		$('data-lsp').each((_, el) => el.attribs.lsp = highlighter.codeToHtml(el.attribs.lsp, {lang: 'typescript'}))
 
 		return $('.shiki .code-container').html();
@@ -59,7 +59,7 @@ const docsCode = ${JSON.stringify(`<div id="docs">${docs}</div>`)};
 }
 
 function splitCode(fullCode, rest) {
-	const $ = cheerio.load(fullCode);
+	const $ = load(fullCode);
 
 	const toRemove = [];
 	for (const k in rest) {

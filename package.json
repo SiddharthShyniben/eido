@@ -1,14 +1,9 @@
 {
   "name": "eido",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Siddharth Shyniben <siddharth.muscat@gmail.com>",
+  "type": "module",
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.18.2",
